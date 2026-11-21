@@ -1,0 +1,1 @@
+pbcopy < ~/Gamedev/power-schedule-bot/.github/workflows/check.yml
