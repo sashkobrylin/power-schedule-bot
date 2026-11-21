@@ -1,1 +1,44 @@
-pbcopy < ~/Gamedev/power-schedule-bot/.github/workflows/check.yml
+name: Перевірка графіків
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"   # кожні 10 хвилин (GitHub може запускати з невеликою затримкою)
+  workflow_dispatch: {}      # кнопка "Run workflow" для ручного запуску
+
+permissions:
+  contents: write            # щоб зберігати state.json у репозиторій
+
+concurrency:
+  group: power-schedule
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Встановити залежності
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Перевірити графіки
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python bot.py
+
+      - name: Зберегти стан
+        if: always()
+        run: |
+          git config user.name "power-schedule-bot"
+          git config user.email "power-schedule-bot@users.noreply.github.com"
+          git add state.json 2>/dev/null || true
+          git diff --cached --quiet || (git commit -m "Оновлено стан графіків" && git push)
