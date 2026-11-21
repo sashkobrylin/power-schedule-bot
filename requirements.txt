@@ -1,0 +1,4 @@
+playwright==1.65.2
+fonttools==4.68.0
+uharfbuzz==0.57.0
+requests==2.34.2
