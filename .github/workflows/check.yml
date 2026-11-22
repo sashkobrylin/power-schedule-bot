@@ -2,7 +2,7 @@ name: Перевірка графіків
 
 on:
   schedule:
-    - cron: "*/10 * * * *"   # кожні 10 хвилин (GitHub може запускати з невеликою затримкою)
+    - cron: "7 * * * *"      # запасний запуск щогодини; основний — кожні 10 хв через cron-job.org
   workflow_dispatch: {}      # кнопка "Run workflow" для ручного запуску
 
 permissions:
@@ -17,9 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
