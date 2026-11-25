@@ -27,3 +27,11 @@ def text_path(text, x, y, size, wght, font_path, fill="#000"):
         glyphset[order[info.codepoint]].draw(tp)
         cx += pos.x_advance
     return f'<path fill="{fill}" d="{pen.getCommands()}"/>'
+
+
+def text_width(text, size, wght, font_path):
+    """Ширина рядка в пікселях (для підкладок і значків поруч із текстом)."""
+    static, hbfont = _load(font_path, wght)
+    buf = hb.Buffer(); buf.add_str(text); buf.guess_segment_properties()
+    hb.shape(hbfont, buf, {"kern": True, "liga": True})
+    return sum(p.x_advance for p in buf.glyph_positions) * size / static["head"].unitsPerEm

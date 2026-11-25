@@ -47,8 +47,9 @@ def _read_cards(page: Page):
 
 
 def fetch_all():
-    """Повертає {дата: {черга: [48 станів]}} для всіх дат, які зараз є на сайті (сьогодні і, можливо, завтра)."""
-    by_date = {}
+    """Повертає ({дата: {черга: [48 станів]}}, {дата: datetime «станом на»}) для всіх дат на сайті
+    (сьогодні і, можливо, завтра). «Станом на» — найпізніше з оновлень обох черг."""
+    by_date, asof = {}, {}
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(locale="uk-UA", viewport={"width": 1280, "height": 1600})
@@ -67,8 +68,13 @@ def fetch_all():
                         f"Адреса {q['city']}, {q['street']} {q['building']} тепер у черзі {card['queue']}, "
                         f"а не {q['queue']}. Оновіть config.py.")
                 by_date.setdefault(date, {})[q["queue"]] = card["halves"]
+                try:
+                    stamp = datetime.strptime(card["asof"], "%d.%m.%Y %H:%M:%S")
+                    asof[date] = max(asof.get(date, stamp), stamp)
+                except ValueError:
+                    pass  # формат змінився — просто покажемо час перевірки
         browser.close()
-    return by_date
+    return by_date, asof
 
 
 def off_intervals(halves):
@@ -86,6 +92,6 @@ def off_intervals(halves):
 
 if __name__ == "__main__":
     import json
-    data = fetch_all()
+    data, _ = fetch_all()
     print(json.dumps({d: {q: off_intervals(h) for q, h in qs.items()} for d, qs in data.items()},
                      ensure_ascii=False, indent=2))
